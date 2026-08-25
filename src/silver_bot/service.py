@@ -14,20 +14,26 @@ def _number(value, places=0):
 def _signed(value, places=0):
     return ("+" if value >= 0 else "-") + _number(abs(value), places)
 
+def _percentage(value):
+    return f"\u2066{_signed(value, 2)}٪\u2069"
+
 def format_message(average, observations, config, previous=None, usdt_price=None, xag_price=None, premium=None):
-    local = datetime.now(timezone.utc).astimezone(ZoneInfo(config.timezone)); lines = ["🥈 قیمت نقره ۹۹۹", "", f"💰 {_number(average)} تومان / گرم"]
+    local = datetime.now(timezone.utc).astimezone(ZoneInfo(config.timezone)); lines = ["🥈 نقره ۹۹۹ — تومان/گرم", "", f"💰 {_number(average)}"]
     change = (average - previous) / previous * Decimal("100") if previous and previous > 0 else Decimal(0)
     icon = "🟢" if change > 0 else "🔴" if change < 0 else "🟡"
-    lines += [f"{icon} {change:+.2f}%"]
-    if usdt_price is not None: lines += [f"💵 دلار (USDT): {_number(usdt_price)} تومان"]
-    if xag_price is not None: lines += [f"🌍 XAG: ${xag_price:.2f} / oz"]
+    lines += [f"{icon} درصد تغییرات: {_percentage(change)}"]
     if premium:
-        lines += [f"📊 حباب میانگین وزنی: {_signed(premium['weighted_absolute'])} تومان ({_signed(premium['weighted_percent'], 2)}%)"]
+        lines += [f"📊 حباب میانگین وزنی: {_signed(premium['weighted_absolute'])} تومان ({_percentage(premium['weighted_percent'])})"]
     lines += [""]
+    if usdt_price is not None or xag_price is not None:
+        lines += ["🌐 بازار جهانی"]
+        if usdt_price is not None: lines += [f"💵 قیمت تتر: {_number(usdt_price)} تومان"]
+        if xag_price is not None: lines += [f"🌍 انس جهانی نقره: ${xag_price:.2f}"]
+        lines += [""]
     if config.breakdown:
         percentages = {item["source"]: item["percent"] for item in premium["items"]} if premium else {}
-        lines += ["📊 جزئیات منابع"] + [f"• {SOURCE_NAMES.get(o.source, o.source)}: {_signed(percentages[o.source], 2)}% | {_number(o.price)} تومان" if o.source in percentages else f"• {SOURCE_NAMES.get(o.source, o.source)}: {_number(o.price)} تومان" for o in observations if o.price is not None and not o.excluded] + [""]
-    lines += [f"✅ منابع معتبر: {sum(o.price is not None and not o.excluded for o in observations)} از {len(observations)}", f"🕒 بروزرسانی: {local:%Y/%m/%d - %H:%M}"]
+        lines += ["📊 بازار ایران"] + [f"• {SOURCE_NAMES.get(o.source, o.source)}: {_percentage(percentages[o.source])} | {_number(o.price)}" if o.source in percentages else f"• {SOURCE_NAMES.get(o.source, o.source)}: {_number(o.price)}" for o in observations if o.price is not None and not o.excluded] + [""]
+    lines += [f"✅ {_number(sum(o.price is not None and not o.excluded for o in observations))} از {_number(len(observations))} منبع معتبر", f"🕒 {local:%Y/%m/%d — %H:%M}"]
     return "\n".join(lines)
 
 def cycle(config, database, bale=None, publish=True):

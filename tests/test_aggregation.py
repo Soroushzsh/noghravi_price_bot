@@ -16,7 +16,7 @@ def test_digikala_current_response_shape():
 def test_message_shows_percentage_change():
     class Config: timezone = "Asia/Tehran"; breakdown = False
     message = format_message(Decimal("110"), [Observation("digikala", price=Decimal("110"))], Config(), Decimal("100"))
-    assert "🟢 +10.00%" in message
+    assert "🟢 درصد تغییرات: \u2066+۱۰٫۰۰٪\u2069" in message
 
 def test_message_includes_usdt_price():
     class Config: timezone = "Asia/Tehran"; breakdown = False
@@ -27,7 +27,7 @@ def test_xag_parser_and_message():
     assert _extract_xag({"currency": "USD", "symbol": "XAG", "price": 68.157997}) == Decimal("68.157997")
     class Config: timezone = "Asia/Tehran"; breakdown = False
     message = format_message(Decimal("100"), [], Config(), xag_price=Decimal("68.157997"))
-    assert "🌍 XAG: $68.16 / oz" in message
+    assert "🌍 انس جهانی نقره: $68.16" in message
 
 def test_weighted_premiums():
     observations = [Observation("a", price=Decimal("110")), Observation("b", price=Decimal("90"))]
@@ -39,9 +39,14 @@ def test_message_includes_premiums():
     class Config: timezone = "Asia/Tehran"; breakdown = True
     premium = {"global": Decimal("100"), "items": [{"source": "digikala", "absolute": Decimal("10"), "percent": Decimal("10")}], "weighted_absolute": Decimal("10"), "weighted_percent": Decimal("10")}
     message = format_message(Decimal("110"), [Observation("digikala", price=Decimal("110"))], Config(), premium=premium)
-    assert "📊 حباب میانگین وزنی: +۱۰ تومان (+۱۰٫۰۰%)" in message
-    assert "• دیجی‌کالا: +۱۰٫۰۰% | ۱۱۰ تومان" in message
+    assert "📊 حباب میانگین وزنی: +۱۰ تومان (\u2066+۱۰٫۰۰٪\u2069)" in message
+    assert "• دیجی‌کالا: \u2066+۱۰٫۰۰٪\u2069 | ۱۱۰" in message
     assert "قیمت مرجع" not in message
+
+def test_message_uses_grouped_layout():
+    class Config: timezone = "Asia/Tehran"; breakdown = True
+    message = format_message(Decimal("110"), [Observation("digikala", price=Decimal("110"))], Config(), usdt_price=Decimal("200000"), xag_price=Decimal("68"))
+    assert message.index("💰 ۱۱۰") < message.index("🌐 بازار جهانی") < message.index("📊 بازار ایران")
 
 def test_database_stores_premium_fields(tmp_path):
     db = Database(str(tmp_path / "prices.db"))
