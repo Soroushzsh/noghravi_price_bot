@@ -1,6 +1,7 @@
 services:
   silver-bot:
     build: .
+    container_name: noghravi_price_bot
     restart: unless-stopped
     env_file: .env
     volumes:

@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 from decimal import Decimal
 from uuid import uuid4
 from zoneinfo import ZoneInfo
-from .sources import fetch
+from .sources import fetch, fetch_usdt
 from .aggregation import aggregate
 
 PERSIAN_DIGITS = str.maketrans("0123456789.", "۰۱۲۳۴۵۶۷۸۹٫")
@@ -11,11 +11,12 @@ SOURCE_NAMES = {"digikala": "دیجی‌کالا", "noghresea": "نقره‌سی
 def _number(value, places=0):
     return f"{value:,.{places}f}".replace(",", "٬").translate(PERSIAN_DIGITS)
 
-def format_message(average, observations, config, previous=None):
+def format_message(average, observations, config, previous=None, usdt_price=None):
     local = datetime.now(timezone.utc).astimezone(ZoneInfo(config.timezone)); lines = ["🥈 قیمت نقره ۹۹۹", "", f"💰 {_number(average)} تومان / گرم"]
     change = (average - previous) / previous * Decimal("100") if previous and previous > 0 else Decimal(0)
     icon = "🟢" if change > 0 else "🔴" if change < 0 else "🟡"
     lines += [f"{icon} {change:+.2f}%"]
+    if usdt_price is not None: lines += [f"💵 دلار (USDT): {_number(usdt_price)} تومان"]
     lines += [""]
     if config.breakdown:
         lines += ["📊 جزئیات منابع"] + [f"• {SOURCE_NAMES.get(o.source, o.source)}: {_number(o.price)} تومان" for o in observations if o.price is not None and not o.excluded] + [""]
@@ -28,5 +29,6 @@ def cycle(config, database, bale=None, publish=True):
     previous = database.latest_average()
     status = "success" if average is not None else "insufficient_sources"; database.run(cycle_id, observations, average, status, config.weights)
     if average is None: return None
-    if bale and publish: bale.send(config.channel, format_message(average, valid, config, previous))
+    usdt_price = fetch_usdt(config.fields["abantether"], config.read_timeout, config.retries)
+    if bale and publish: bale.send(config.channel, format_message(average, valid, config, previous, usdt_price))
     return average

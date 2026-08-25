@@ -16,3 +16,8 @@ def test_message_shows_percentage_change():
     class Config: timezone = "Asia/Tehran"; breakdown = False
     message = format_message(Decimal("110"), [Observation("digikala", price=Decimal("110"))], Config(), Decimal("100"))
     assert "🟢 +10.00%" in message
+
+def test_message_includes_usdt_price():
+    class Config: timezone = "Asia/Tehran"; breakdown = False
+    message = format_message(Decimal("100"), [], Config(), usdt_price=Decimal("199043"))
+    assert "💵 دلار (USDT): ۱۹۹٬۰۴۳ تومان" in message
