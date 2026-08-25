@@ -1,0 +1,12 @@
+services:
+  silver-bot:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - ./data:/data
+    healthcheck:
+      test: ["CMD", "python", "-m", "silver_bot", "healthcheck"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
