@@ -1,7 +1,7 @@
 from decimal import Decimal
 from silver_bot.aggregation import aggregate
 from silver_bot.sources import Observation
-from silver_bot.sources import _extract
+from silver_bot.sources import _extract, _extract_xag
 from silver_bot.service import format_message
 def test_weighted_average_and_outlier():
     obs = [Observation(str(i), price=Decimal(v)) for i,v in enumerate((100,101,99,1000))]
@@ -21,3 +21,9 @@ def test_message_includes_usdt_price():
     class Config: timezone = "Asia/Tehran"; breakdown = False
     message = format_message(Decimal("100"), [], Config(), usdt_price=Decimal("199043"))
     assert "💵 دلار (USDT): ۱۹۹٬۰۴۳ تومان" in message
+
+def test_xag_parser_and_message():
+    assert _extract_xag({"currency": "USD", "symbol": "XAG", "price": 68.157997}) == Decimal("68.157997")
+    class Config: timezone = "Asia/Tehran"; breakdown = False
+    message = format_message(Decimal("100"), [], Config(), xag_price=Decimal("68.157997"))
+    assert "🌍 XAG: $68.16 / oz" in message

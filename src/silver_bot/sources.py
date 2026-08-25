@@ -4,6 +4,7 @@ import http.cookiejar, json, time, urllib.request
 
 URLS = {"digikala":"https://api.digikala.com/non-inventory/v1/prices/", "noghresea":"https://api.noghresea.ir/api/market/getSilverPrice", "tokeniko":"https://tokeniko.com/api/prices-with-change", "melligold":"https://melligold.com/api/v1/exchange/buy-sell-price/?symbol=XAG&format=json"}
 ABANTETHER_URL = "https://api.abantether.com/api/v1/manager/otc/ticker?coin=USDT"
+XAG_URL = "https://api.gold-api.com/price/XAG"
 OPENER = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(http.cookiejar.CookieJar()))
 @dataclass
 class Observation:
@@ -38,5 +39,21 @@ def fetch_usdt(field, timeout, retries):
                 return Decimal(str(json.loads(response.read())["data"]["markets"]["USDTIRT"][field]))
         except Exception as exc:
             last = exc
+            if attempt < retries: time.sleep(0.5 * (attempt + 1))
+    return None
+
+def _extract_xag(data):
+    if data.get("currency") != "USD" or data.get("symbol") != "XAG": raise ValueError("unexpected XAG response")
+    price = Decimal(str(data["price"]))
+    if price <= 0: raise ValueError("XAG price must be positive")
+    return price
+
+def fetch_xag(timeout, retries):
+    for attempt in range(retries + 1):
+        try:
+            request = urllib.request.Request(XAG_URL, headers={"User-Agent":"silver-price-bale-bot/1.0", "Accept":"application/json"})
+            with OPENER.open(request, timeout=timeout) as response:
+                return _extract_xag(json.loads(response.read()))
+        except Exception:
             if attempt < retries: time.sleep(0.5 * (attempt + 1))
     return None
