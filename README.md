@@ -23,3 +23,5 @@ With `PYTHONPATH=src` and a configured `.env`: `python -m silver_bot once --dry-
 Back up SQLite with the SQLite backup API (for example, `sqlite3 data/silver_price_bot.db ".backup 'backup.db'"`) while the service is running.
 
 The channel’s `🌍 XAG` line comes from Gold API’s free, unauthenticated USD-per-troy-ounce endpoint. If that external quote is unavailable, the local silver message is still published without the line.
+
+Premium (حباب) is calculated as each valid Iranian source price minus the global XAG price converted with the configured USDT quote: `XAG USD/oz × USDT Toman/USD ÷ 31.1034768`. The message includes each source premium and the same-weighted average premium; missing global inputs omit premium lines without blocking publication.
