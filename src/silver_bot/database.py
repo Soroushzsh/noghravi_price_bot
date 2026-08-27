@@ -1,4 +1,5 @@
 import sqlite3
+from datetime import datetime
 from decimal import Decimal
 
 SCHEMA = """CREATE TABLE IF NOT EXISTS aggregation_runs (id INTEGER PRIMARY KEY, cycle_id TEXT UNIQUE, started_at TEXT, finished_at TEXT, status TEXT, weighted_average_toman TEXT, valid_source_count INTEGER, candidate_source_count INTEGER, total_effective_weight TEXT, published INTEGER DEFAULT 0, bale_message_id TEXT, error_message TEXT, xag_usd_per_oz TEXT, usdt_toman_per_usd TEXT, global_price_toman TEXT, weighted_premium_toman TEXT, weighted_premium_percent TEXT, created_at TEXT); CREATE TABLE IF NOT EXISTS source_observations (id INTEGER PRIMARY KEY, cycle_id TEXT REFERENCES aggregation_runs(cycle_id), source TEXT, requested_at TEXT, received_at TEXT, latency_ms INTEGER, http_status INTEGER, raw_price TEXT, normalized_price_toman TEXT, configured_weight TEXT, selected_field TEXT, valid INTEGER, excluded_reason TEXT, error_type TEXT, error_message TEXT, raw_response TEXT, premium_toman TEXT, premium_percent TEXT, created_at TEXT);"""
@@ -16,6 +17,11 @@ class Database:
     def latest_average(self):
         row = self.db.execute("SELECT weighted_average_toman FROM aggregation_runs WHERE status='success' AND weighted_average_toman IS NOT NULL ORDER BY id DESC LIMIT 1").fetchone()
         return Decimal(row[0]) if row else None
+    def latest_published(self):
+        row = self.db.execute("SELECT weighted_average_toman, finished_at FROM aggregation_runs WHERE status='success' AND published=1 ORDER BY id DESC LIMIT 1").fetchone()
+        return (Decimal(row[0]), datetime.fromisoformat(row[1])) if row else None
+    def mark_published(self, cycle, message_id=None):
+        self.db.execute("UPDATE aggregation_runs SET published=1, bale_message_id=? WHERE cycle_id=?", (message_id, cycle)); self.db.commit()
     def run(self, cycle, observations, average, status, weights, xag_price=None, usdt_price=None, premium=None):
         from datetime import datetime, timezone
         now = datetime.now(timezone.utc).isoformat(); items = {item["source"]: item for item in premium["items"]} if premium else {}
