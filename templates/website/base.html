@@ -1,0 +1,26 @@
+{% load static fa %}<!doctype html>
+<html lang="fa" dir="rtl" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#71171c">
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"نقره تایم","url":"{{ site_url }}"}</script>
+  <title>{% block title %}نقره تایم | مرجع قیمت و تحلیل نقره{% endblock %}</title>
+  <meta name="description" content="مرجع قیمت، روند و تحلیل بازار نقره ایران و اونس جهانی.">
+  <link rel="canonical" href="{{ site_url }}{{ request.path }}">
+  <link rel="icon" type="image/png" href="{% static 'images/favicon.png' %}">
+  <link rel="stylesheet" href="{% static 'css/site.css' %}">
+  <script>try{const t=localStorage.getItem('theme');if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+  {% block head %}{% endblock %}
+</head>
+<body>
+<a class="skip-link" href="#main">پرش به محتوای اصلی</a>
+<header class="site-header"><div class="shell header-inner">
+  <a class="brand" href="{% url 'home' %}" aria-label="صفحه اصلی نقره تایم"><span class="brand-symbol" aria-hidden="true"><img src="{% static 'images/logo.png' %}" alt="" width="174" height="97"></span><span class="brand-copy"><strong>نقره تایم</strong><small>قیمت لحظه‌ای نقره ۹۹۹</small></span></a>
+  <nav class="desktop-nav" aria-label="ناوبری اصلی"><a href="{% url 'price' %}">قیمت نقره</a><a href="{% url 'chart' %}">نمودار</a><a href="{% url 'reports' %}">تحلیل‌ها</a><a href="{% url 'predictions' %}">پیش‌بینی</a><a href="{% url 'about' %}">درباره ما</a></nav>
+  <div class="header-actions"><button class="icon-button" type="button" data-theme-toggle aria-label="تغییر پوسته">◐</button>{% if bale_channel_url %}<a class="button button-small" href="{{ bale_channel_url }}" target="_blank" rel="noopener">دنبال کردن در بله</a>{% endif %}</div>
+</div></header>
+<main id="main">{% block content %}{% endblock %}</main>
+<footer class="site-footer"><div class="shell footer-inner"><div class="footer-brand"><span class="brand-symbol" aria-hidden="true"><img src="{% static 'images/logo.png' %}" alt="" width="174" height="97" loading="lazy"></span><div><strong>نقره تایم</strong><p>مرجع قیمت، روند و تحلیل بازار نقره</p></div></div><div class="footer-links"><a href="{% url 'about' %}">درباره ما</a><a href="{% url 'reports' %}">گزارش‌ها</a><a href="{% url 'predictions' %}">پیش‌بینی‌ها</a></div></div></footer>
+<script src="{% static 'js/site.js' %}" defer></script>{% block scripts %}{% endblock %}
+</body></html>
