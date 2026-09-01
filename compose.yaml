@@ -1,4 +1,25 @@
 services:
+  migrate:
+    build: .
+    env_file: .env
+    volumes:
+      - ./data:/data
+    command: ["sh", "-c", "python -m silver_bot init-db && python manage.py migrate --noinput"]
+  web:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - ./data:/data
+    command: ["gunicorn", "noghre_time.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "2", "--access-logfile", "-", "--error-logfile", "-"]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
   silver-bot:
     build: .
     container_name: noghravi_price_bot
@@ -6,8 +27,30 @@ services:
     env_file: .env
     volumes:
       - ./data:/data
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
     healthcheck:
       test: ["CMD", "python", "-m", "silver_bot", "healthcheck"]
       interval: 60s
       timeout: 10s
       retries: 3
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      SITE_ADDRESS: ${SITE_ADDRESS:-:80}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      web:
+        condition: service_started
+
+volumes:
+  caddy_data:
+  caddy_config:

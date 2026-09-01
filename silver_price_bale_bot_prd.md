@@ -469,23 +469,17 @@ No database timestamps should be stored as ambiguous local times.
 
 # 14. Publishing Policy
 
-Default:
+Polling and channel publishing are independent:
 
-`PUBLISH_ONLY_ON_CHANGE=false`
+```text
+SEND_CHANNEL_MESSAGE_ENABLED=true
+SEND_CHANNEL_MESSAGE_INTERVAL=10800
+SEND_CHANNEL_MESSAGE_CHANGE_THRESHOLD_PERCENT=0.5
+```
 
-Therefore a message is sent after every successful polling cycle.
+The bot polls every `POLL_INTERVAL_SECONDS` and stores every cycle. A channel message is sent when channel messages are enabled and either no message has been published, the send interval has elapsed since the last successful publication, or the absolute aggregate-price change since the last successfully published message is strictly greater than the configured percentage threshold. The first successful aggregate is published immediately.
 
-Provide optional support for:
-
-`PUBLISH_ONLY_ON_CHANGE=true`
-
-If enabled, compare the newly calculated price with the last successfully published price.
-
-An optional future configuration may be:
-
-`MIN_CHANGE_TO_PUBLISH_TOMAN`
-
-This is not necessary for the first implementation.
+The threshold and displayed message percentage both use the last successfully published price as their baseline. Intervals are positive integer seconds; `10800` represents three hours. When channel messages are disabled, Bale credentials are not required and no threshold exception can trigger a send.
 
 ---
 
@@ -775,7 +769,9 @@ HTTP_MAX_RETRIES=2
 # Output
 DISPLAY_TIMEZONE=Asia/Tehran
 INCLUDE_SOURCE_BREAKDOWN=true
-PUBLISH_ONLY_ON_CHANGE=false
+SEND_CHANNEL_MESSAGE_ENABLED=true
+SEND_CHANNEL_MESSAGE_INTERVAL=10800
+SEND_CHANNEL_MESSAGE_CHANGE_THRESHOLD_PERCENT=0.5
 
 # Persistence
 DATABASE_PATH=/data/silver_price_bot.db

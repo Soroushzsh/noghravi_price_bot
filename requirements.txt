@@ -1,1 +1,6 @@
-# Runtime uses Python standard library only.
+# Django web runtime and existing worker.
+Django>=5.2,<6
+gunicorn>=23,<24
+whitenoise>=6.9,<7
+markdown>=3.8,<4
+nh3>=0.2,<1

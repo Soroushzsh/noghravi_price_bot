@@ -22,6 +22,27 @@ With `PYTHONPATH=src` and a configured `.env`: `python -m silver_bot once --dry-
 
 Back up SQLite with the SQLite backup API (for example, `sqlite3 data/silver_price_bot.db ".backup 'backup.db'"`) while the service is running.
 
+## Noghre Time website
+
+The public Persian RTL website and editorial panel run from the same Python image as the worker. Start the full stack with:
+
+```sh
+cp .env.example .env
+# set DJANGO_SECRET_KEY, DJANGO_ALLOWED_HOSTS, SITE_URL, and Bale settings
+docker compose up --build -d
+docker compose logs -f web
+```
+
+Create the first editorial administrator once:
+
+```sh
+docker compose run --rm web python manage.py createsuperuser
+```
+
+Open `/admin/` to publish reports and predictions. Draft records are private; only records marked published appear on the public site. Reports use Markdown and predictions retain their historical outcomes. No content is seeded automatically.
+
+The public pages are `/`, `/price/`, `/chart/`, `/reports/`, `/predictions/`, and `/about/`. Read-only JSON endpoints live under `/api/v1/`. Caddy terminates HTTPS when `SITE_ADDRESS` is set to the production domain; backend and SQLite ports are not exposed.
+
 The channel’s `🌍 XAG` line comes from Gold API’s free, unauthenticated USD-per-troy-ounce endpoint. If that external quote is unavailable, the local silver message is still published without the line.
 
 Premium (حباب) is calculated as each valid Iranian source price minus the global XAG price converted with the configured USDT quote: `XAG USD/oz × USDT Toman/USD ÷ 31.1034768`. The message includes each source premium and the same-weighted average premium; missing global inputs omit premium lines without blocking publication.

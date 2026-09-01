@@ -1,5 +1,12 @@
 .git
 .venv
 data
+.local-data
+web-data
+*.sqlite3
 .env
+.env.django
 __pycache__
+staticfiles
+.agents
+tests
